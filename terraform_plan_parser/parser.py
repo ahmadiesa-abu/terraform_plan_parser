@@ -10,6 +10,7 @@ Functions:
     main: entrypoint
 """
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +79,7 @@ def parseChanges(changes, textonly):
         action = getAction(c["actions"], textonly)
         message = "({action}): {name} ({address})\n {attributes}".format(
             action=action, name=c["name"], address=c["address"],
-            attributes=c["attributes"]
+            attributes=json.dumps(c["attributes"], indent=4, sort_keys=True)
         )
         content += message + "\n"
     return content

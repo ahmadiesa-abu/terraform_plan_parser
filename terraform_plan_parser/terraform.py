@@ -15,9 +15,22 @@ Functions:
     parsePlan: main function
 """
 import logging
-import dictdiffer
 
 logger = logging.getLogger(__name__)
+
+
+def dict_diff(dict_a, dict_b, show_value_diff=True):
+  result = {}
+  result['added']   = {k: dict_b[k] for k in set(dict_b) - set(dict_a)}
+  result['removed'] = {k: dict_a[k] for k in set(dict_a) - set(dict_b)}
+  if show_value_diff:
+    common_keys =  set(dict_a) & set(dict_b)
+    result['value_diffs'] = {
+      k:(dict_a[k], dict_b[k])
+      for k in common_keys
+      if dict_a[k] != dict_b[k]
+    }
+  return result
 
 
 def getResourceChanges(data):
@@ -102,9 +115,19 @@ def calculateName(resource):
 
 
 def calculateAttributeChanges(resource):
-    before = resource["before"] or {}
-    after  = resource["after"] or {}
-    return dictdiffer.diff(before, after)
+    attributes_changes = {}
+
+    before = resource["change"]["before"] or {}
+    after  = resource["change"]["after_unknown"] or {}
+    after.update(resource["change"]["after"] or {})
+
+    attributes_changes['changes'] = dict_diff(before, after)
+
+    before = resource["change"]["before_sensitive"] or {}
+    after = resource["change"]["after_sensitive"] or {}
+    attributes_changes['sensitive_changes'] = dict_diff(before, after)
+
+    return attributes_changes
 
 
 def parseResource(resource):
